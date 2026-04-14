@@ -708,6 +708,7 @@ class ViveTrackerGroup():
         self.stuck_on_not_checked = [0]*5
         self.bump_map_once = [True]*5
         self.bump_map_once_2 = [True]*5
+        self.tracker_sn = [""] * 5
 
         self.pose_listeners = []
         self._active_tracker_slots = []
@@ -746,6 +747,7 @@ class ViveTrackerGroup():
         self.stuck_on_not_checked[idx] = 0
         self.bump_map_once[idx] = True
         self.bump_map_once_2[idx] = True
+        self.tracker_sn[idx] = ""
         if idx in self._active_tracker_slots:
             self._active_tracker_slots.remove(idx)
 
@@ -865,6 +867,10 @@ class ViveTrackerGroup():
         elif data[0:1] == ACK_CATEGORY_DEVICE_INFO:
             data_real = data[1:]
             verbose_print(f"   Got device info ACK ({mac_str(device_addr)}):", data_real[:3])
+            tracker_slot = mac_to_idx(device_addr)
+
+            if data_real[0:3] == ACK_DEVICE_SN:
+                self.tracker_sn[tracker_slot] = data_real[3:]
 
             # Handle post-deviceinfo commands
             if data_real[0:3] == ACK_AZZ:
@@ -1032,6 +1038,7 @@ class ViveTrackerGroup():
         sample = {
             "tracker_index": contiguous_index,
             "mac": bytes(mac),
+            "sn": self.tracker_sn[tracker_slot],
             "buttons": buttons,
             "tracking_status": tracking_status,
             "timestamp_ms": self.pose_time[tracker_slot],
